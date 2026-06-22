@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>TODO</title>
+  </head>
+  <body>
+    <div class="card">
+      <header class="titlebar">
+        <span class="title">📝 TODO</span>
+        <button id="closeBtn" class="close" title="閉じる（アプリ終了）">×</button>
+      </header>
+
+      <form id="addForm" class="add-row">
+        <input
+          id="newInput"
+          type="text"
+          placeholder="やることを追加..."
+          autocomplete="off"
+          maxlength="200"
+        />
+        <button type="submit" class="add-btn" title="追加">＋</button>
+      </form>
+
+      <div class="filters">
+        <button data-filter="all" class="active">すべて</button>
+        <button data-filter="active">未完了</button>
+        <button data-filter="done">完了</button>
+      </div>
+
+      <ul id="list" class="list"></ul>
+
+      <footer class="footer">
+        <span id="count"></span>
+        <button id="clearDone" class="clear-done">完了を削除</button>
+      </footer>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

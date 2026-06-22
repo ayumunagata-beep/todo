@@ -1,0 +1,12 @@
+{
+  "name": "floating-todo",
+  "version": "1.0.0",
+  "description": "常に最前面に表示される、画面左下のTODOウィジェット",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^42.4.1"
+  }
+}
