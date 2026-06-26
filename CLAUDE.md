@@ -14,7 +14,9 @@ npm start        # = electron .  起動
 
 - 終了：ウィジェット右上の **×**、または `Cmd + Q`
 - データ保存先：`~/Library/Application Support/floating-todo/todos.json`
-  （`app.getPath('userData')` 配下。アプリ名は package.json の `name`）
+  （`app.getPath('userData')` 配下。`main.js` 先頭の `app.setName('floating-todo')` でパスを固定）
+  - 保存は **一時ファイル→rename のアトミック書き込み**＋直前版を `todos.json.bak` に退避。読込時に本体が壊れていれば `.bak` から復旧するため、強制終了でもデータを失わない
+  - userData 配下に置く理由：個人の TODO が Git リポジトリに混入しないようにするため
 
 ---
 
@@ -42,7 +44,7 @@ npm start        # = electron .  起動
 データモデル（1 件の TODO）：
 
 ```js
-{ id: string, text: string, done: boolean, createdAt: number }
+{ id: string, text: string, detail: string, done: boolean, createdAt: number }
 ```
 
 ---
@@ -59,8 +61,10 @@ npm start        # = electron .  起動
 | **Create**（追加） | `renderer.js` `add()`（フォーム submit / `＋`） |
 | **Read**（一覧・フィルタ） | `renderer.js` `load()` → `render()`。フィルタ：すべて/未完了/完了 |
 | **Update**（完了切替・本文編集） | `renderer.js` `toggle()`、`beginEdit()`（テキストを**ダブルクリック**で編集） |
+| **詳細の表示・編集** | `renderer.js` `toggleDetail()`：各タスクの **▸/▾** で詳細エリアを開閉 → 展開した `textarea` に `detail` を入力。`input` で debounce 保存（`persistDebounced()`）＋ `blur` で確定保存。開閉状態は `expandedIds`（Set）で保持し再描画でも維持。詳細ありのタスクは ▸/▾ をアクセント色（`.detail-btn.has-detail`）で表示 |
 | **Delete**（削除） | `renderer.js` `remove()`（🗑）、フッタ「完了を削除」 |
-| **永続化** | renderer `persist()` → IPC `'todos:save'` → main `saveTodos()`／起動時 `'todos:load'` → `loadTodos()` |
+| **並べ替え**（ドラッグで順序変更） | `renderer.js`：各行左端の **⠿ ハンドル**だけを `draggable` 化（他操作と非干渉）。`listEl` の `dragover` で行を実DOM差し込み・`drop` で確定（`getDragAfterElement` / `commitOrderFromDom`）。フィルタ非表示のタスクは位置維持。順序は **`todos` の配列順**としてそのまま永続化（データモデル変更なし）。`styles.css` `.drag-handle` / `.item.dragging` |
+| **永続化（消えない保存）** | renderer `persist()` → IPC `'todos:save'` → main `saveTodos()`（tmp書込→`.bak`退避→`rename` でアトミック置換）／起動時 `'todos:load'` → `loadTodos()`（本体破損時は `.bak` から復旧） |
 
 IPC チャンネル一覧：`todos:load`（invoke）/ `todos:save`（invoke）/ `app:close`（send）。
 
@@ -73,6 +77,7 @@ IPC チャンネル一覧：`todos:load`（invoke）/ `todos:save`（invoke）/ 
 - **配置を別の隅へ**：`createWindow()` の x,y 計算を変更（例：右下なら `x = workArea.x + workArea.width - WIN_W - MARGIN`）
 - **配色・見た目**：`styles.css` の `:root` 変数（`--bg/--fg/--accent` など）
 - **保存項目を増やす**：データモデル（§3）＋ `renderer.js` の `add()`/`render()`／`main.js` は JSON をそのまま読み書きなので原則変更不要
+- **並べ替えの無効化／ハンドル位置・見た目**：`renderer.js` の `drag-handle` 生成箇所と `listEl` の `dragover`/`drop`、`styles.css` の `.drag-handle`。順序は `todos` の配列順がそのまま保存されるので、別途ソート項目は不要
 
 ---
 

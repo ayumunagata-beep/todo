@@ -143,14 +143,26 @@ input {
 
 .item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 6px;
+  flex-direction: column;
   border-radius: 8px;
 }
 
 .item:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* 並べ替えでドラッグ中の行（差し込み先が分かるよう半透明に） */
+.item.dragging {
+  opacity: 0.45;
+  background: rgba(79, 140, 255, 0.12);
+}
+
+/* 1行目：チェック / 本文 / 詳細トグル / 削除 */
+.item-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 6px;
 }
 
 .item .text {
@@ -171,6 +183,32 @@ input {
   cursor: pointer;
 }
 
+/* ドラッグハンドル（つかんで並べ替え）。普段は控えめ、ホバーで強調 */
+.drag-handle {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 1px;
+  margin-left: -2px;
+  cursor: grab;
+  opacity: 0.3;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.item:hover .drag-handle {
+  opacity: 0.65;
+}
+
+.drag-handle:hover {
+  color: var(--fg);
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 .del {
   border: none;
   background: transparent;
@@ -186,6 +224,65 @@ input {
 
 .del:hover {
   opacity: 1;
+}
+
+/* 詳細トグルボタン（▸ 閉 / ▾ 開） */
+.detail-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 6px;
+  opacity: 0.55;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+.item:hover .detail-btn {
+  opacity: 0.9;
+}
+
+.detail-btn:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 詳細が書き込まれているタスクはアクセント色で示す */
+.detail-btn.has-detail {
+  color: var(--accent);
+  opacity: 0.95;
+}
+
+/* 2行目：詳細の入力エリア（チェックボックス幅ぶん字下げ） */
+.item-detail {
+  padding: 0 8px 9px 30px;
+}
+
+.detail-input {
+  width: 100%;
+  min-height: 54px;
+  max-height: 160px;
+  resize: none;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--fg);
+  outline: none;
+  overflow-y: auto;
+}
+
+.detail-input:focus {
+  border-color: var(--accent);
+}
+
+.detail-input::placeholder {
+  color: var(--muted);
 }
 
 .edit-input {

@@ -2,6 +2,9 @@ const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// userData の保存先がブレないようアプリ名を固定（todos.json の場所を常に一定に保つ）
+app.setName('floating-todo');
+
 const WIN_W = 320; // 初期幅
 const WIN_H = 460; // 初期高さ
 const MIN_W = 240; // 最小幅（リサイズ下限）
@@ -10,23 +13,38 @@ const MARGIN = 16; // 画面端からの余白
 
 let win;
 
+// 保存先（ローカルの JSON ファイル）。userData 配下なので個人のTODOがGitに混入しない。
 function dataFile() {
   return path.join(app.getPath('userData'), 'todos.json');
 }
-
-function loadTodos() {
-  try {
-    return JSON.parse(fs.readFileSync(dataFile(), 'utf-8'));
-  } catch {
-    return [];
-  }
+function backupFile() {
+  return dataFile() + '.bak';
 }
 
+// 読み込み：本体が壊れていればバックアップから復旧（破損・中断時もデータを失わない）
+function loadTodos() {
+  for (const f of [dataFile(), backupFile()]) {
+    try {
+      const data = JSON.parse(fs.readFileSync(f, 'utf-8'));
+      if (Array.isArray(data)) return data;
+    } catch {
+      // 次の候補（.bak）へフォールバック
+    }
+  }
+  return [];
+}
+
+// 保存：一時ファイルに書いてから rename（原子的置換）。書き込み中に強制終了されても壊れない。
 function saveTodos(todos) {
   try {
-    fs.writeFileSync(dataFile(), JSON.stringify(todos, null, 2), 'utf-8');
+    const file = dataFile();
+    const tmp = file + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(todos, null, 2), 'utf-8');
+    if (fs.existsSync(file)) fs.copyFileSync(file, backupFile()); // 直前の正常版を退避
+    fs.renameSync(tmp, file); // 同一ボリューム内の rename はアトミック
     return true;
-  } catch {
+  } catch (e) {
+    console.error('saveTodos failed:', e);
     return false;
   }
 }
